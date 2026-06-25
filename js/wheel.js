@@ -23,20 +23,47 @@ function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
 
 // --- Canvas texture for a single pocket number -----------------------------
+// A coloured tile (red / black / green) with a crisp white, outlined numeral —
+// so each pocket clearly shows BOTH its colour and its number.
+const TILE_BG = { red: '#c81e2e', black: '#16181f', green: '#0c9d5e' };
+
 function numberTexture(n, colour) {
+  const D = 160;
   const c = document.createElement('canvas');
-  c.width = c.height = 96;
+  c.width = c.height = D;
   const g = c.getContext('2d');
-  g.clearRect(0, 0, 96, 96);
-  g.fillStyle = '#ffffff';
-  g.font = 'bold 56px Georgia, serif';
+
+  // Rounded coloured background fills the whole pocket tile.
+  g.fillStyle = TILE_BG[colour] || '#16181f';
+  const r = 18;
+  g.beginPath();
+  g.moveTo(r, 0); g.arcTo(D, 0, D, D, r); g.arcTo(D, D, 0, D, r);
+  g.arcTo(0, D, 0, 0, r); g.arcTo(0, 0, D, 0, r); g.closePath();
+  g.fill();
+
+  // Thin gold inner border.
+  g.strokeStyle = 'rgba(231,200,120,0.6)';
+  g.lineWidth = 5;
+  g.strokeRect(5, 5, D - 10, D - 10);
+
+  // Big white numeral with a dark outline for contrast on any colour. Squeeze
+  // double digits slightly so they fill the tile without clipping.
+  const two = String(n).length > 1;
+  g.font = `bold ${two ? 108 : 130}px Georgia, serif`;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.shadowColor = 'rgba(0,0,0,0.6)';
-  g.shadowBlur = 4;
-  g.fillText(String(n), 48, 50);
+  g.save();
+  g.translate(D / 2, D / 2 + 4);
+  if (two) g.scale(0.92, 1);
+  g.lineWidth = 12;
+  g.strokeStyle = 'rgba(0,0,0,0.9)';
+  g.strokeText(String(n), 0, 0);
+  g.fillStyle = '#ffffff';
+  g.fillText(String(n), 0, 0);
+  g.restore();
+
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 8;
+  t.anisotropy = 16;
   return t;
 }
 
@@ -124,12 +151,12 @@ export function buildWheel(scene) {
     // wedge with its number label and the ball's landing angle.
     const a0 = -i * STEP - STEP / 2;
 
-    // Coloured pocket wedge.
+    // Coloured pocket wedge (vivid, lightly self-lit so the colour always reads).
     const wedge = new THREE.Mesh(
       new THREE.RingGeometry(POCKET_INNER, POCKET_OUTER, 6, 1, a0, STEP),
       new THREE.MeshStandardMaterial({
-        color: COLOURS[colourOf(n)], roughness: 0.45, metalness: 0.35,
-        emissive: COLOURS[colourOf(n)], emissiveIntensity: 0.05,
+        color: COLOURS[colourOf(n)], roughness: 0.55, metalness: 0.15,
+        emissive: COLOURS[colourOf(n)], emissiveIntensity: 0.18,
       }),
     );
     wedge.rotation.x = -Math.PI / 2;
@@ -144,15 +171,17 @@ export function buildWheel(scene) {
     fret.rotation.y = -af;
     rotor.add(fret);
 
-    // Number label, lying flat, reading outward.
+    // Number tile: a coloured chip with a big white numeral, laid flat in the
+    // pocket with its tall axis pointing radially so it's easy to read.
     const label = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.34, 0.34),
+      new THREE.PlaneGeometry(0.5, 0.5),
       new THREE.MeshBasicMaterial({ map: numberTexture(n, colourOf(n)), transparent: true }),
     );
     const am = i * STEP;
-    label.position.set(Math.cos(am) * 2.78, POCKET_Y + 0.011, Math.sin(am) * 2.78);
+    label.position.set(Math.cos(am) * 2.62, POCKET_Y + 0.03, Math.sin(am) * 2.62);
     label.rotation.x = -Math.PI / 2;
-    label.rotation.z = -am + Math.PI / 2;
+    label.rotation.z = -am - Math.PI / 2;
+    label.renderOrder = 2;
     rotor.add(label);
   }
 
@@ -176,26 +205,28 @@ export function buildWheel(scene) {
   // Central turret / spinner.
   const turret = new THREE.Group();
   turret.position.y = POCKET_Y;
+  // Shorter, satin-gold turret — tall/mirror metal here was the main source of
+  // bloom glare that hid the wheel face.
   const cone = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.25, 1.9, 1.5, 48),
-    new THREE.MeshStandardMaterial({ color: COLOURS.gold, roughness: 0.15, metalness: 1.0 }),
+    new THREE.CylinderGeometry(0.22, 1.7, 1.05, 48),
+    new THREE.MeshStandardMaterial({ color: 0xb8923f, roughness: 0.45, metalness: 0.7 }),
   );
-  cone.position.y = 0.75;
+  cone.position.y = 0.52;
   cone.castShadow = true;
   turret.add(cone);
   const knob = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 24, 24),
-    new THREE.MeshStandardMaterial({ color: 0xfff2cc, roughness: 0.1, metalness: 1.0, emissive: 0x4a3a10, emissiveIntensity: 0.4 }),
+    new THREE.SphereGeometry(0.2, 24, 24),
+    new THREE.MeshStandardMaterial({ color: 0xe7c878, roughness: 0.35, metalness: 0.7 }),
   );
-  knob.position.y = 1.6;
+  knob.position.y = 1.12;
   turret.add(knob);
   // Cross handles.
   for (let i = 0; i < 4; i++) {
     const h = new THREE.Mesh(
-      new THREE.BoxGeometry(2.4, 0.07, 0.12),
-      new THREE.MeshStandardMaterial({ color: 0xe7c878, roughness: 0.2, metalness: 1.0 }),
+      new THREE.BoxGeometry(2.0, 0.06, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0xc9a85e, roughness: 0.4, metalness: 0.75 }),
     );
-    h.position.y = 1.45;
+    h.position.y = 1.0;
     h.rotation.y = (i / 4) * Math.PI;
     turret.add(h);
   }
@@ -206,7 +237,7 @@ export function buildWheel(scene) {
   // ---------------------------------------------------------------------
   const ballMat = new THREE.MeshStandardMaterial({
     color: 0xffffff, roughness: 0.04, metalness: 0.2,
-    emissive: 0xffffff, emissiveIntensity: 0.35,
+    emissive: 0xffffff, emissiveIntensity: 1.1,
   });
   const balls = [];
   for (let i = 0; i < 3; i++) {

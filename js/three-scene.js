@@ -15,7 +15,7 @@ export function createScene(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 0.95;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
@@ -23,13 +23,13 @@ export function createScene(canvas) {
   scene.fog = new THREE.FogExp2(0x05070d, 0.018);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-  camera.position.set(0, 11.5, 13.5);
+  camera.position.set(0, 10.2, 11.6);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
   controls.target.set(0, 0.5, 0);
-  controls.minDistance = 9;
+  controls.minDistance = 7;
   controls.maxDistance = 24;
   controls.maxPolarAngle = Math.PI * 0.46;
   controls.minPolarAngle = Math.PI * 0.12;
@@ -37,12 +37,14 @@ export function createScene(canvas) {
   controls.autoRotateSpeed = 0.4;
 
   // ---- Lighting --------------------------------------------------------
-  scene.add(new THREE.AmbientLight(0x4a5a7a, 0.55));
+  // Brighter ambient/hemi so pocket colours and numbers read clearly, with a
+  // softer key light so polished metal doesn't blow out under bloom.
+  scene.add(new THREE.AmbientLight(0x6878a0, 0.85));
 
-  const hemi = new THREE.HemisphereLight(0x88aaff, 0x10221a, 0.5);
+  const hemi = new THREE.HemisphereLight(0xaac4ff, 0x14241c, 0.7);
   scene.add(hemi);
 
-  const key = new THREE.SpotLight(0xfff0d8, 700, 60, Math.PI / 5, 0.5, 1.6);
+  const key = new THREE.SpotLight(0xfff0d8, 220, 60, Math.PI / 5, 0.55, 1.4);
   key.position.set(6, 18, 8);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -52,11 +54,11 @@ export function createScene(canvas) {
   scene.add(key);
   scene.add(key.target);
 
-  const rim = new THREE.PointLight(0x3a6bff, 180, 40, 2);
+  const rim = new THREE.PointLight(0x3a6bff, 70, 40, 2);
   rim.position.set(-9, 6, -6);
   scene.add(rim);
 
-  const gold = new THREE.PointLight(0xffcb6b, 120, 30, 2);
+  const gold = new THREE.PointLight(0xffcb6b, 45, 30, 2);
   gold.position.set(8, 4, -5);
   scene.add(gold);
 
@@ -83,7 +85,9 @@ export function createScene(canvas) {
   // ---- Post-processing: bloom for that neon casino glow ----------------
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.6, 0.7, 0.85);
+  // Gentle, high-threshold bloom: only genuinely bright things (the glowing
+  // ball, neon edges) glow — it no longer washes out the wheel face.
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.32, 0.5, 0.9);
   composer.addPass(bloom);
 
   function resize(w, h) {
