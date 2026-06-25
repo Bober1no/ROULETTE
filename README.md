@@ -12,17 +12,14 @@ JavaScript modules. Just open `index.html`.
 
 ## ▶️ How to run
 
-No build step, no install. Open the file in any modern browser:
+**Just double-click `index.html`.** That's it.
 
-```bash
-# from the project root, either just double-click index.html, or:
-python3 -m http.server 8000
-# then visit http://localhost:8000
-```
+No server, no build step, no install, no internet connection. `index.html` is a
+single fully self-contained file — Three.js, all game code, and all styles are
+inlined — so it runs straight from the `file://` protocol in any modern browser.
 
-> Because the game uses ES module import maps, opening it through a local web
-> server (as above) is the most reliable option. Three.js is bundled under
-> `js/vendor/`, so it works completely offline.
+> The only thing that needs the network is the optional Google Fonts link; if
+> you're offline the game falls back to system fonts and plays identically.
 
 ## 🎲 The Twist
 
@@ -61,7 +58,10 @@ This is not basic roulette. Four interlocking systems make every spin a decision
 ## 🗂️ Project structure
 
 ```
-index.html              # entry point + import map + DOM scaffold
+index.html              # ← THE GAME: single self-contained build (just open it)
+
+index.src.html          # modular dev source (needs a server; ES modules)
+build.mjs               # bundles the source into the single-file index.html
 css/styles.css          # casino-neon / glassmorphism UI
 js/
   data.js               # wheel layout, colours, payouts, bots, powers
@@ -75,8 +75,20 @@ js/
   audio.js              # synthesised WebAudio sound (no asset files)
   ui.js                 # HUD: player cards, powers, history, toasts, banners
   main.js               # boot, render loop, round lifecycle
-  vendor/               # Three.js (bundled for offline use)
+  vendor/               # Three.js (vendored for offline builds)
 ```
+
+### Rebuilding `index.html`
+
+The shipped `index.html` is generated from the modular source. To rebuild after
+editing anything in `js/` or `css/`:
+
+```bash
+npm i -D esbuild     # one-time
+node build.mjs       # regenerates the self-contained index.html
+```
+
+`build.mjs` resolves Three.js from `js/vendor/`, so the build runs offline too.
 
 ## 🛠️ Tech notes
 

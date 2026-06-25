@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>ROULETTE ROYALE — Last Spin Standing</title>
+  <!--
+    DEV SOURCE. This modular version needs a local web server (ES modules are
+    blocked over file://). For the no-server, double-click build, run
+    `node build.mjs` to regenerate the single self-contained ../index.html.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Three.js vendored locally so the dev build also runs offline -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./js/vendor/three.module.js",
+      "three/addons/": "./js/vendor/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- 3D scene -->
+  <canvas id="scene"></canvas>
+  <div id="vignette"></div>
+
+  <!-- ===================== INTRO / HOW TO PLAY ===================== -->
+  <div id="intro" class="modal">
+    <div class="modal-card">
+      <h1 class="logo">ROULETTE <span>ROYALE</span></h1>
+      <p class="tagline">Last Spin Standing · 3D Battle-Royale Roulette</p>
+      <div class="rules">
+        <div class="rule"><b>🎯 Multi-Ball</b><span>Spin 1–3 balls. More balls = steadier, smaller payouts. One ball = high-risk glory. Each ball pays its share.</span></div>
+        <div class="rule"><b>🔥 Heat Streak</b><span>Win consecutive rounds to stack a payout multiplier up to ×3. One loss resets it.</span></div>
+        <div class="rule"><b>⚡ Power Chips</b><span>Earn Power Chips on straight-up hits &amp; streaks. Spend them to bend balls, scout the future, insure losses, or sabotage rivals.</span></div>
+        <div class="rule"><b>💀 Battle Royale</b><span>You + 4 AI sharks, 1000 chips each. Every 5 rounds the lowest stack is eliminated. Bust = out. Be the last one standing.</span></div>
+      </div>
+      <button id="startBtn" class="btn btn-gold big">ENTER THE TABLE</button>
+    </div>
+  </div>
+
+  <!-- ===================== TOP BAR ===================== -->
+  <header id="topbar" class="hidden">
+    <div class="brand">ROULETTE <span>ROYALE</span></div>
+    <div class="round-info">
+      <div class="pill"><label>ROUND</label><b id="roundNum">1</b></div>
+      <div class="pill"><label>NEXT CUT</label><b id="nextCut">5</b></div>
+      <div class="pill heat"><label>HEAT</label><b id="heatVal">×1.0</b></div>
+    </div>
+    <button id="muteBtn" class="icon-btn" title="Mute">🔊</button>
+  </header>
+
+  <!-- ===================== OPPONENTS RAIL ===================== -->
+  <aside id="players" class="hidden"></aside>
+
+  <!-- ===================== POWERS PANEL ===================== -->
+  <aside id="powers" class="hidden">
+    <div class="powers-head">
+      <span>POWER CHIPS</span>
+      <b id="pcCount">1</b>
+    </div>
+    <div id="powerList"></div>
+    <div id="oracleReveal" class="oracle hidden"></div>
+  </aside>
+
+  <!-- ===================== RESULT BANNER ===================== -->
+  <div id="resultBanner" class="hidden"></div>
+
+  <!-- ===================== HISTORY ===================== -->
+  <div id="history" class="hidden"></div>
+
+  <!-- ===================== BETTING DOCK ===================== -->
+  <section id="dock" class="hidden">
+    <div id="board"></div>
+
+    <div class="controls">
+      <div class="chiprail" id="chiprail"></div>
+
+      <div class="ballpick">
+        <label>BALLS</label>
+        <div class="ballbtns" id="ballbtns">
+          <button data-balls="1" class="ballbtn active">1</button>
+          <button data-balls="2" class="ballbtn">2</button>
+          <button data-balls="3" class="ballbtn">3</button>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="clearBtn" class="btn btn-ghost">CLEAR</button>
+        <button id="rebetBtn" class="btn btn-ghost">RE-BET</button>
+        <button id="spinBtn" class="btn btn-gold">SPIN</button>
+      </div>
+
+      <div class="stake-readout">
+        <label>AT STAKE</label><b id="stakeVal">0</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TOASTS ===================== -->
+  <div id="toasts"></div>
+
+  <!-- ===================== GAME OVER ===================== -->
+  <div id="gameover" class="modal hidden">
+    <div class="modal-card">
+      <h1 id="goTitle" class="logo">VICTORY</h1>
+      <p id="goText" class="tagline"></p>
+      <div id="goStats" class="rules"></div>
+      <button id="againBtn" class="btn btn-gold big">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div id="loading">Loading the table…</div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
