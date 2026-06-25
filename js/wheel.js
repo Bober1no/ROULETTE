@@ -152,11 +152,13 @@ export function buildWheel(scene) {
     const a0 = -i * STEP - STEP / 2;
 
     // Coloured pocket wedge (vivid, lightly self-lit so the colour always reads).
+    // Coloured pocket wedge, strongly self-lit (emissive) so the colour reads
+    // even at grazing camera angles and under dim lighting.
     const wedge = new THREE.Mesh(
       new THREE.RingGeometry(POCKET_INNER, POCKET_OUTER, 6, 1, a0, STEP),
       new THREE.MeshStandardMaterial({
-        color: COLOURS[colourOf(n)], roughness: 0.55, metalness: 0.15,
-        emissive: COLOURS[colourOf(n)], emissiveIntensity: 0.18,
+        color: COLOURS[colourOf(n)], roughness: 0.5, metalness: 0.1,
+        emissive: COLOURS[colourOf(n)], emissiveIntensity: 0.85,
       }),
     );
     wedge.rotation.x = -Math.PI / 2;
@@ -171,18 +173,25 @@ export function buildWheel(scene) {
     fret.rotation.y = -af;
     rotor.add(fret);
 
-    // Number tile: a coloured chip with a big white numeral, laid flat in the
-    // pocket with its tall axis pointing radially so it's easy to read.
-    const label = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.5, 0.5),
+    // Number plate: a coloured chip with a big white numeral, mounted on an
+    // inclined ring that faces up-and-outward (like a real wheel's number band)
+    // so it stays readable from the usual oblique camera angles instead of
+    // vanishing edge-on. Unlit (MeshBasic) so it shows full colour always.
+    const am = i * STEP;
+    const pr = 2.46;
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.46, 0.46),
       new THREE.MeshBasicMaterial({ map: numberTexture(n, colourOf(n)), transparent: true }),
     );
-    const am = i * STEP;
-    label.position.set(Math.cos(am) * 2.62, POCKET_Y + 0.03, Math.sin(am) * 2.62);
-    label.rotation.x = -Math.PI / 2;
-    label.rotation.z = -am - Math.PI / 2;
-    label.renderOrder = 2;
-    rotor.add(label);
+    plate.position.set(Math.cos(am) * pr, POCKET_Y + 0.17, Math.sin(am) * pr);
+    // Tilt ~45°: normal points outward (+radial) and up.
+    plate.lookAt(
+      plate.position.x + Math.cos(am) * 1.2,
+      plate.position.y + 1.2,
+      plate.position.z + Math.sin(am) * 1.2,
+    );
+    plate.renderOrder = 2;
+    rotor.add(plate);
   }
 
   // Inner gold ring framing the pockets.
